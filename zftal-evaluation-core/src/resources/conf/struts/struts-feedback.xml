@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN" "http://struts.apache.org/dtds/struts-2.0.dtd">
+<struts>
+  <package name="feedback" namespace="/feedback" extends="configuration">
+    <!-- 信息员管理 -->
+    <action name="staff_*" class="feedBackAction" method="{1}" >
+      <result name="upload">/WEB-INF/pages/feedback/staff/staff_upload.jsp</result>
+      <result name="staffSearchList">/WEB-INF/pages/feedback/staff/staff_list.jsp</result>
+      <result name="staffEdit">/WEB-INF/pages/feedback/staff/staff_edit.jsp</result>
+      <result name="staffAddView">/WEB-INF/pages/feedback/staff/staff_add.jsp</result>
+    </action>
+    <!-- 信息反馈 -->
+    <action name="info_*" class="feedBackAction" method="{1}">
+    	<result name="todayCkList">/WEB-INF/pages/feedback/info/ck_list.jsp</result>
+    	<result name="addFeekbackIndex">/WEB-INF/pages/feedback/info/add_feed_back.jsp</result>
+    	<result name="feedBackList">/WEB-INF/pages/feedback/info/feed_back_list.jsp</result>
+    	<result name="feedBackDetail">/WEB-INF/pages/feedback/info/feed_back_detail.jsp</result>
+    </action>
+    
+     <!-- 信息反馈处理 -->
+    <action name="handle_*" class="feedBackAction" method="{1}">
+    	<!-- 单位管理员处理反馈信息列表页面 -->
+    	<result name="unitHandleFeedBackList">/WEB-INF/pages/feedback/handle/unit_feed_back_list.jsp</result>
+    	<!-- 单位管理员处理页面 -->
+    	<result name="unitHandleFeedbackView">/WEB-INF/pages/feedback/handle/unit_handle_feed_back.jsp</result>
+    	<!-- 单位管理员反馈页面 -->
+    	<result name="unitHandleAddFeedbackView">/WEB-INF/pages/feedback/handle/unit_handle_add_feed_back.jsp</result>
+    	
+    	<!-- 责任人/单位处理反馈信息列表页面 -->
+    	<result name="personHandleFeedBackList">/WEB-INF/pages/feedback/handle/person_feed_back_list.jsp</result>
+    	<!-- 责任人/单位处理页面 -->
+    	<result name="personHandleFeedbackView">/WEB-INF/pages/feedback/handle/person_handle_feed_back.jsp</result>
+    	
+    	<!-- 校级管理员处理反馈信息列表页面 -->
+    	<result name="schoolHandleFeedBackList">/WEB-INF/pages/feedback/handle/school_feed_back_list.jsp</result>
+    	<!-- 校级管理员处理页面 -->
+    	<result name="schoolHandleFeedbackView">/WEB-INF/pages/feedback/handle/school_handle_feed_back.jsp</result>
+    </action>
+    
+     <!-- 移动端信息反馈 -->
+    <action name="m_*" class="feedBackAction" method="{1}" >
+    	<interceptor-ref name="mobileBaseStack" />
+	  	<result name="addFeedback">/WEB-INF/pages/feedback/mobile/feedback_edit.jsp</result>
+	  	<result name="veiwFeedback">/WEB-INF/pages/feedback/mobile/feedback_detail.jsp</result>
+	  	<result name="searchfeedBackList">/WEB-INF/pages/feedback/mobile/feedback_list.jsp</result>
+    </action>
+     
+  </package>
+</struts>

@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zfsoft.wjdc_xc.dao.IInspectionTaskDao">
+    <insert id="insert">
+        insert into XC_TASK(id,wjid,taskDate,CONFIG_TYPE,zt,rwjb,rwbm,rwmc,pjdxlx,pjdx )
+        values(
+            #{id,jdbcType=VARCHAR},
+            #{wjid,jdbcType=VARCHAR},
+            #{taskDate,jdbcType=VARCHAR},
+            #{configType,jdbcType=VARCHAR},
+            '0',
+            #{rwjb,jdbcType=VARCHAR},
+            #{rwbm,jdbcType=VARCHAR},
+            #{rwmc,jdbcType=VARCHAR},
+            #{pjdxlx,jdbcType=VARCHAR},
+            #{pjdx,jdbcType=VARCHAR}
+        )
+        <selectKey resultType="java.lang.String" order="BEFORE"
+            keyProperty="id">
+            <![CDATA[
+            SELECT SYS_GUID() ID FROM DUAL
+            ]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 增加结课评价学生记录 -->
+    <insert id="saveMemberOfJkpj">
+        INSERT INTO xc_task_member t
+		  SELECT #{xn}||'-'||#{xq}||'-'||a.xh, #{taskId}, a.xh, #{xn}, #{xq}
+		    FROM jxpj_jcsj_xsxkb a
+		   WHERE a.xn = #{xn}
+		     AND a.xq = #{xq}
+		   GROUP BY a.xh
+    </insert>
+    
+    <delete id="remove">
+        delete from XC_TASK where id= #{id}
+    </delete>
+     
+    <update id="update">
+        update XC_TASK set id=#{id}
+        <if test="wjid != null and wjid != ''">
+           ,wjid = #{wjid}
+        </if>
+        <if test="rwmc != null and rwmc != ''">
+           ,rwmc = #{rwmc}
+        </if>
+        <if test="pjdxlx != null and pjdxlx != ''">
+           ,pjdxlx = #{pjdxlx}
+        </if>
+        <if test="pjdx != null and pjdx != ''">
+           ,pjdx = #{pjdx}
+        </if>
+        <if test="zt != null and zt != ''">
+           ,zt = #{zt}
+        </if>
+         where id=#{id}
+    </update>
+     
+    <select id="findById" resultType="com.zfsoft.wjdc_xc.entites.InspectionTask">
+        SELECT task.*,
+		       task.config_type AS configType,
+		       (SELECT COUNT(DISTINCT dcdx)
+		          FROM xc_task_result r
+		          LEFT JOIN xc_task_member m ON (m.ID = r.memberid)
+		         WHERE m.taskId = task.id
+		           AND r.status = '1') AS dxNum,
+		       (SELECT COUNT(DISTINCT gh)
+		          FROM xc_task_member m
+		         WHERE m.taskId = task.id) AS memberNum,
+		       wj.wjmc AS wjText
+		  FROM XC_TASK task
+		  LEFT JOIN wjdc_wjxxb wj ON (wj.wjid = task.wjid)
+		 WHERE task.id = #{0}
+    </select>
+    
+    <select id="getPagingInfoList" resultType="com.zfsoft.wjdc_xc.entites.InspectionTask">
+         select taskPage.*,
+          (SELECT COUNT(DISTINCT dcdx) FROM xc_task_result r LEFT JOIN xc_task_member m ON(m.ID = r.memberid) WHERE m.taskId=taskPage.id AND r.status='1') as dxNum,
+          (select count(DISTINCT gh) from xc_task_member m where m.taskId=taskPage.id) as memberNum 
+          from (select a.*, rownum rn from(
+	         select task.*,wj.wjmc as wjText from XC_TASK task 
+	         left join wjdc_wjxxb wj on (wj.wjid=task.wjid)
+	         <include refid="wherePaging"/>
+	         <if test="orderStr != null and orderStr != ''">
+	            order by ${orderStr}
+	        </if> 
+	     ) a ) taskPage
+        <![CDATA[
+            where rn>=#{startRow}  and rn<=#{endRow}
+        ]]>
+    </select>
+    
+    <select id="getPagingInfoCount" resultType="int">
+        select count(0) from XC_TASK task left join wjdc_wjxxb wj on (wj.wjid=task.wjid)
+        <include refid="wherePaging"/>
+    </select>
+    
+    <sql id="wherePaging">
+        <where>
+            CONFIG_TYPE = #{configType}
+            <if test="wjText != null and wjText != ''">
+                and wj.wjmc like '%'||#{wjText}||'%'
+            </if>
+            <if test="rwmc != null and rwmc != ''">
+                and rwmc like '%'||#{rwmc}||'%'
+            </if>
+            <if test="zt != null and zt != ''">
+                and zt = #{zt}
+            </if>
+            <if test="rwjb != null and rwjb != ''">
+                and rwjb = #{rwjb}
+            </if>
+            <if test="rwbm != null and rwbm != ''">
+                and rwbm = #{rwbm}
+            </if>
+            <if test="start != null">
+                and taskDate>=#{start}
+            </if>
+            <if test="end != null">
+                and #{end}>=taskDate
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 获取评价人员列表数量 -->
+    <select id="getTaskMemberCount" resultType="int">
+	    SELECT COUNT(*)
+		  FROM (SELECT t.gh gh, x.xm xm, '学生' rylx, x.xy xy, x.zymc zy, x.xzb xzb
+		          FROM xc_task_member t, jxpj_jcsj_xsxx x
+		         WHERE t.gh = x.xh AND t.taskid= #{id}
+				    <if test="xy != null and xy != ''">
+		                and x.xy = (SELECT bmmc FROM hrm_bzgl_zzjgb WHERE bmdm = #{xy})
+		            </if>
+				    <if test="xm != null and xm != ''">
+		                and x.xm like '%'||#{xm}||'%'
+		            </if>
+		            <if test="zy != null and zy != ''">
+		                and x.zymc like '%'||#{zy}||'%'
+		            </if>
+		            <if test="xzb != null and xzb != ''">
+		                and x.xzb like '%'||#{xzb}||'%'
+		            </if>
+		        UNION
+		        SELECT t.gh gh, j.xm xm, '教师' rylx, j.bm xy, j.zymc zy, ''
+		          FROM xc_task_member t, jxpj_jcsj_jsxx j
+		         WHERE t.gh = j.zgh AND t.taskid= #{id}
+		         	<if test="xy != null and xy != ''">
+		                and j.bm = (SELECT bmmc FROM hrm_bzgl_zzjgb WHERE bmdm = #{xy})
+		            </if>
+				    <if test="xm != null and xm != ''">
+		                and j.xm like '%'||#{xm}||'%'
+		            </if>
+		            <if test="zy != null and zy != ''">
+		                and j.zymc like '%'||#{zy}||'%'
+		            </if>
+		         )
+    </select>
+    
+    <!-- 获取评价人员列表 -->
+    <select id="getTaskMemberList" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskMember">
+	    	select * from (select a.*, rownum rn from (
+	    		SELECT t.gh gh, x.xm xm, '学生' rylx, x.xy xy, x.zymc zy, x.xzb xzb
+		          FROM xc_task_member t, jxpj_jcsj_xsxx x
+		         WHERE t.gh = x.xh AND t.taskid= #{id}
+				    <if test="xy != null and xy != ''">
+		                and x.xy = (SELECT bmmc FROM hrm_bzgl_zzjgb WHERE bmdm = #{xy})
+		            </if>
+				    <if test="xm != null and xm != ''">
+		                and x.xm like '%'||#{xm}||'%'
+		            </if>
+		            <if test="zy != null and zy != ''">
+		                and x.zymc like '%'||#{zy}||'%'
+		            </if>
+		            <if test="xzb != null and xzb != ''">
+		                and x.xzb like '%'||#{xzb}||'%'
+		            </if>
+		        UNION
+		        SELECT t.gh gh, j.xm xm, '教师' rylx, j.bm xy, j.zymc zy, ''
+		          FROM xc_task_member t, jxpj_jcsj_jsxx j
+		         WHERE t.gh = j.zgh AND t.taskid= #{id}
+		         	<if test="xy != null and xy != ''">
+		                and j.bm = (SELECT bmmc FROM hrm_bzgl_zzjgb WHERE bmdm = #{xy})
+		            </if>
+				    <if test="xm != null and xm != ''">
+		                and j.xm like '%'||#{xm}||'%'
+		            </if>
+		            <if test="zy != null and zy != ''">
+		                and j.zymc like '%'||#{zy}||'%'
+		            </if>
+			) a )
+	        <![CDATA[
+	        where rn >= #{startRow} and rn <= #{endRow}
+	        ]]>
+    </select>
+    
+    <select id="findMyTaskMember" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskMember">
+        select member.*,wj.wjmc as wjText,wj.wjid,task.taskDate from XC_TASK task 
+        left join wjdc_wjxxb wj on (wj.wjid=task.wjid)
+        left join XC_TASK_MEMBER member on (MEMBER.TASKID= TASK.ID)
+        where member.gh = #{0} 
+        order by task.taskDate desc
+    </select>
+    
+    <select id="findMemberById" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskMember">
+        select member.*,wj.wjmc as wjText,wj.wjid,task.taskDate from XC_TASK task 
+        left join wjdc_wjxxb wj on (wj.wjid=task.wjid)
+        left join XC_TASK_MEMBER member on (MEMBER.TASKID= TASK.ID)
+        where member.id=#{0}
+    </select>
+    
+    <select id="getMemberList" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskMember">
+        select member.*,wj.wjmc as wjText,wj.wjid,task.taskDate from XC_TASK task 
+        left join wjdc_wjxxb wj on (wj.wjid=task.wjid)
+        left join XC_TASK_MEMBER member on (MEMBER.TASKID= TASK.ID)
+        <where>task.config_type=#{configType}
+            <if test="taskId != null and taskId != ''">
+            and taskId = #{taskId}
+            </if>
+            <if test="gh != null and gh != ''">
+            and gh = #{gh}
+            </if>
+            <if test="id != null and id != ''">
+            and member.id = #{id}
+            </if>
+            <if test="queryDayNum != null and queryDayNum != ''">
+            and taskDate>=sysdate-#{queryDayNum}
+            </if>
+            
+        </where>
+        order by task.taskDate desc
+    </select>
+
+    <delete id="removeMember">
+        delete from XC_TASK_MEMBER
+        <where>
+            taskId = #{taskId}
+            <if test="gh != null and gh != ''">
+            and gh = #{gh}
+            </if>
+        </where>
+    </delete>
+    
+    <insert id="insertMember">
+        insert into XC_TASK_MEMBER(id,taskId,gh
+           )
+        values(
+            #{id},
+            #{taskId},
+            #{gh}
+        )
+        <selectKey resultType="java.lang.String" order="BEFORE"
+            keyProperty="id">
+            <![CDATA[
+            SELECT SYS_GUID() ID FROM DUAL
+            ]]>
+        </selectKey>
+    </insert>
+    
+    <select id="getTaskSummerPage" resultType="hashmap">
+    select * from (select a.*, rownum rn from(
+        SELECT res.dcdx,
+		       (SELECT xm FROM overall WHERE gh = res.dcdx) dcdxmc,
+		       COUNT(DISTINCT res.ID) AS num,
+		       SUM(nvl(xx.xxfz, 0)) AS fz
+		  FROM xc_task_result res
+		  LEFT JOIN XC_TASK_MEMBER MEMBER ON (MEMBER.id = res.memberId)
+		  LEFT JOIN wjdc_wjhdb hd ON (hd.djrid = res.ID)
+		  LEFT JOIN wjdc_wjstxxb xx ON (xx.wjid = hd.wjid AND hd.stid = xx.stid AND
+		                               hd.xxid = xx.xxid)
+		 WHERE res.status = '1'
+		   AND MEMBER.taskid = #{params.taskId}
+		 GROUP BY res.dcdx
+        ) a )
+        <![CDATA[
+            where rn>=#{startRow}  and rn<=#{endRow}
+        ]]>
+        
+    </select>
+    <select id="getTaskSummerPageCount" resultType="int">
+        select count(0) from (
+        select res.dcdx,count(0) as num from xc_task_result res
+        left join XC_TASK_MEMBER member on (member.id = res.memberId)
+        WHERE res.status='1' and member.taskid = #{params.taskId} 
+        group by res.dcdx
+        )
+    </select>
+    
+    <select id="getXcdxSummerPage" resultType="hashmap">
+    select * from (select a.*, rownum rn from(
+        SELECT res.id,MEMBER.GH,sum(nvl(xx.xxfz,0)) AS fz  FROM 
+        xc_task_result res
+        left join XC_TASK_MEMBER member on (member.id = res.memberId)
+        LEFT JOIN wjdc_wjhdb hd ON (hd.djrid=res.ID)
+        LEFT JOIN wjdc_wjstxxb xx ON (xx.wjid=hd.wjid AND hd.stid = xx.stid AND hd.xxid = xx.xxid)
+        WHERE res.status='1' and member.taskid = #{params.taskId} and res.dcdx=#{params.dcdx}
+        group by res.id,MEMBER.GH
+        ) a )
+         <![CDATA[
+            where rn>=#{startRow}  and rn<=#{endRow}
+        ]]>
+    </select>
+    <select id="getXcdxSummerPageCount" resultType="int">
+        select count(0) from (
+        select res.id,count(0) as num from xc_task_result res
+        left join XC_TASK_MEMBER member on (member.id = res.memberId)
+        WHERE res.status='1' and member.taskid = #{params.taskId} and res.dcdx=#{params.dcdx}
+        group by res.id,MEMBER.GH
+        )
+    </select>
+    
+    <!-- 根据课程ID获取课程信息 -->
+    <select id="getLessonByKcid" resultType="hashmap">
+    	 SELECT t.kcmc, t.kcsj, t.kcjc, t.skdd, t.kkxy, j.xm, k.fldm, k.fldm2
+		   FROM jxpj_jcsj_kcbxx t
+		   LEFT JOIN jxpj_jcsj_jsxx j
+		     ON j.zgh = t.rklsgh
+		   LEFT JOIN jxpj_jcsj_kcflxx k
+		     ON substr(t.kcid, 15, 8) = k.kcdm
+		  WHERE t.globalid = #{0}
+		    AND rownum = 1
+    </select>
+    
+    <!-- 开放预约听课列表 -->
+    <select id="getLessonCount" resultType="int">
+    	<![CDATA[
+        select count(*)
+          from jxpj_jcsj_kcbxx t 
+          	left join overall js on t.rklsgh = js.gh
+         ]]>
+			  <include refid="lessonWhere"/>
+		<![CDATA[
+        order by t.kcsj, t.kcjc
+        ]]>
+    </select>
+    
+    <!-- 开放预约听课列表 -->
+    <select id="getLessonList" resultType="hashmap">
+    	<![CDATA[
+        select * from (select a.*, rownum rn from (
+        select t.*, js.xm as rkls,
+         (select zymc from jxpj_jcsj_zyxx where zydm = t.sszyid) as sszy
+          from jxpj_jcsj_kcbxx t 
+          	left join overall js on t.rklsgh = js.gh
+         ]]>
+			  <include refid="lessonWhere"/>
+		<![CDATA[
+        order by t.kcsj, t.kcjc
+        ) a )
+        where rn >= #{startRow} and rn <= #{endRow}
+        ]]>
+    </select>
+    
+    <!-- 提取查询条件 -->	
+    <sql id="lessonWhere">
+    	<where> t.kcjc in ('1','3','5','7','9')
+           	<if test="taskDate != null and taskDate != ''">
+           		and to_date(t.kcsj, 'yyyy-MM-dd') = to_date(#{taskDate}, 'yyyy-MM-dd')
+           	</if>
+           	<if test="rwbm != null and rwbm != ''">
+           		and t.kkxy = #{rwbm}  	
+           	</if>
+        </where>
+    </sql> 
+    
+    <!-- 查询汇总结课评价信息列表数量 -->
+    <select id="getEndingClassSumResultCount" resultType="int">
+        SELECT count(1)
+		  FROM view_jxpj_xsjkpj t
+		 <include refid="endingClassWhere"/>
+    </select>
+    
+    <!-- 查询汇总结课评价信息 -->
+    <select id="getEndingClassSumResult" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskMember">
+    	select * from (select a.*, rownum rn from (
+	        SELECT *
+			  FROM view_jxpj_xsjkpj t
+			 <include refid="endingClassWhere"/>
+			 ORDER BY t.xy, t.zymc, t.xzb, t.gh
+		 ) a )
+		 <![CDATA[
+        where rn >= #{startRow} and rn <= #{endRow}
+        ]]>
+    </select>
+    
+    <!-- 提取查询条件 -->	
+    <sql id="endingClassWhere">
+    	<where> 1=1
+           	<if test="xn != null and xn != ''">
+	           	 AND t.xn = #{xn}
+	         </if>
+			 <if test="xq != null and xq != ''">
+	           	 AND t.xq = #{xq}
+	         </if>
+			 <if test="xm != null and xm != ''">
+			     AND t.xm like '%'||#{xm}||'%'
+			 </if>
+			 <if test="zy != null and zy != ''">
+			      AND t.zymc like '%'||#{zy}||'%'
+			 </if>
+			 <if test="xy != null and xy != ''">
+			      AND t.xy LIKE '%' || #{xy} || '%'
+			 </if>
+			 <if test="xzb != null and xzb != ''">
+			      AND t.xzb LIKE '%' || #{xzb} || '%'
+			 </if>
+			 <if test="condition != null and condition != ''">
+            	${condition}
+          	 </if>
+        </where>
+    </sql> 
+</mapper>

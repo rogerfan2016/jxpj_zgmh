@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zfsoft.wjdc_xc.dao.IInspectionTaskResultDao">
+
+	<!-- 新增评价结果记录 -->
+    <insert id="insert">
+        INSERT INTO xc_task_result
+		  (id, memberid, dcdx, dcr, status, sksj, kcmc, skdd, kcjc, kkxy, kcdm, jsxm)
+		VALUES
+		  (#{id },
+		   #{memberId},
+		   #{dcdx},
+		   #{dcr},
+		   '0',
+		   #{sksj, jdbcType=VARCHAR},
+		   #{kcmc, jdbcType=VARCHAR},
+		   #{skdd, jdbcType=VARCHAR},
+		   #{kcjc, jdbcType=VARCHAR},
+		   #{kkxy, jdbcType=VARCHAR},
+		   #{kcdm, jdbcType=VARCHAR},
+		   #{jsxm, jdbcType=VARCHAR}
+		   )
+        <selectKey resultType="java.lang.String" order="BEFORE"
+            keyProperty="id">
+            <![CDATA[
+            SELECT SYS_GUID() ID FROM DUAL
+            ]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 删除评价结果记录 -->
+    <delete id="remove">
+        delete from XC_TASK_RESULT where id= #{id}
+    </delete>
+     
+    <update id="update">
+        update XC_TASK_RESULT set id=#{id}
+        <if test="status != null and status != ''">
+           ,status = #{status}
+        </if>
+        <if test="zf != null and zf != ''">
+           ,zf = #{zf},dcsj = sysdate
+        </if>
+        where id=#{id}
+    </update>
+     
+    <!-- 通过条件获取评价人员记录 -->
+    <select id="findTaskMemberByParam" resultType="hashMap">
+        SELECT m.*,
+		       t.taskdate,
+		       t.config_type,
+		       t.zt,
+		       t.rwmc,
+		       t.pjdx,
+		       t.pjdxlx,
+		       t.rwjb
+		  FROM xc_task_member m, xc_task t
+		 WHERE t.id = m.taskid
+		   AND t.config_type = #{configType}
+		   AND m.gh = #{gh}
+    </select>
+    
+    <!-- 通过条件获取评价课程记录 -->
+    <select id="findEndingClassList" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskResult">
+        SELECT DISTINCT t2.jszgh dcdx,
+		                t1.xh dcr,
+		                t2.kcmc,
+		                t2.skdd,
+		                t2.kkxy,
+		                t2.kcdm,
+		                t2.jsxm
+		  FROM (SELECT xn, xq, xkkh, xh, xm
+		          FROM jxpj_jcsj_xsxkb
+		         GROUP BY xn, xq, xkkh, xh, xm) t1
+		  LEFT JOIN jxpj_jcsj_jxrwb t2
+		    ON t1.xkkh = t2.xkkh
+		 WHERE t1.xh = #{gh}
+		   AND t1.xn = #{xn}
+		   AND t1.xq = #{xq}
+    </select>
+    
+    <!-- 通过KCID获取评价课程记录================================================================================================= -->
+    <select id="findLessonByKcId" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskResult">
+        SELECT t.kcmc,
+		       t.skdd,
+		       t.kkxy,
+		       substr(t.kcid, 15, 8) kcdm,
+		       t.rklsgh dcdx,
+		       #{gh} dcr,
+		       j.xm jsxm
+		  FROM jxpj_jcsj_kcbxx t
+		  LEFT JOIN jxpj_jcsj_jsxx j
+		    ON j.zgh = t.rklsgh
+		 WHERE t.globalid = #{kcid}
+		   AND rownum = 1
+    </select>
+    
+    <!-- 通过条件判断结课评价结果记录是否存在 -->
+    <select id="getEndingCalssCountByParam" resultType="int">
+        SELECT COUNT(1)
+		  FROM xc_task_result t
+		 WHERE t.dcdx = #{dcdx}
+		   AND t.dcr = #{dcr}
+		   AND t.kcdm = #{kcdm}
+		   AND t.memberid = #{memberid}
+    </select>
+    
+    <select id="findById" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskResult">
+        select t.*,task.taskDate,task.wjid,task.zt rwzt,wj.wjmc as wjText,o.xm as dcdxText,wj.wjzt,dj.djzt
+             from XC_TASK_RESULT t
+             left join XC_TASK_MEMBER member on (member.id = t.memberId)
+             left join XC_TASK task on (MEMBER.TASKID= TASK.ID)
+             left join wjdc_wjxxb wj on (wj.wjid=task.wjid)
+             left join overall o on (o.gh=t.dcdx)
+             left join wjdc_djrffb dj on (dj.zjz=t.id and dj.lxid='WJDC_XC')
+        where t.id = #{0}
+    </select>
+    
+    <!-- 获取被评价对象为人员的评价结果信息 -->
+    <select id="getPagingInfoList" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskResult">
+         select * from (select a.*, rownum rn from(
+             select t.*,task.taskDate,task.wjid,task.zt rwzt,wj.wjmc as wjText,o.xm as dcdxText,wj.wjzt,dj.djzt
+             from XC_TASK_RESULT t
+             left join XC_TASK_MEMBER member on (member.id = t.memberId)
+             left join XC_TASK task on (MEMBER.TASKID= TASK.ID)
+             left join wjdc_wjxxb wj on (wj.wjid=task.wjid)
+             left join overall o on (o.gh=t.dcdx)
+             left join wjdc_djrffb dj on (dj.zjz=t.dcr and dj.lxid='WJDC_XC')
+             <include refid="wherePaging"/>
+             order by task.taskDate,t.dcsj desc
+         ) a )
+        <![CDATA[
+            where rn>=#{startRow}  and rn<=#{endRow}
+        ]]>
+    </select>
+    
+    <select id="getPagingInfoCount" resultType="int">
+        select count(0) from XC_TASK_RESULT t 
+        left join XC_TASK_MEMBER member on (member.id = t.memberId)
+        left join XC_TASK task on (MEMBER.TASKID= TASK.ID)
+        left join overall o on (o.gh=t.dcdx)
+        left join wjdc_djrffb dj on (dj.zjz=t.id and dj.lxid='WJDC_XC')
+        <include refid="wherePaging"/>
+    </select>
+    
+    <sql id="wherePaging">
+        <where>
+            	task.config_type=#{configType}
+            <if test="gh != null and gh != ''">
+                and member.gh=#{gh}
+            </if>
+            <if test="memberId != null and memberId != ''">
+                and member.id=#{memberId}
+            </if>
+            <if test="dcdx != null and dcdx != ''">
+                and t.dcdx=#{dcdx}
+            </if>
+            <if test="dcdxText != null and dcdxText != ''">
+                and o.xm like '%'||#{dcdxText}||'%'
+            </if>
+            <if test="status != null and status != ''">
+                and t.status=#{status}
+            </if>
+            <if test="start != null">
+                and task.taskDate>=#{start}
+            </if>
+            <if test="end != null">
+                and #{end}>=task.taskDate
+            </if>
+        </where>
+    </sql>
+    
+    <!-- 获取分值综合 -->
+    <select id="getFzSum" resultType="int">
+        SELECT SUM(nvl(xx.xxfz, 0)) AS fz
+		  FROM xc_task_result res
+		  LEFT JOIN wjdc_wjhdb hd ON (hd.wjid = res.ID)
+		  LEFT JOIN wjdc_wjstxxb xx ON (xx.wjid = hd.wjid AND hd.stid = xx.stid AND
+		                               hd.xxid = xx.xxid)
+		 WHERE res.id = #{id}
+    </select>
+    
+    
+    <!-- 获取教学楼信息列表 -->
+    <select id="getJxlList" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskResult">
+        SELECT t.lh jxl
+		  FROM jxpj_jcsj_jxcdxx t
+		 GROUP BY t.xqdm, lh
+		HAVING t.lh IS NOT NULL
+		 ORDER BY t.lh
+    </select>
+    
+    <!-- 获取某教学楼教室信息列表 -->
+    <select id="getSkddListByJxl" resultType="com.zfsoft.wjdc_xc.entites.InspectionTaskResult">
+        SELECT t.jsmc skdd 
+		  FROM jxpj_jcsj_jxcdxx t
+		 WHERE t.lh = #{jxl }
+		 ORDER BY t.jsmc
+    </select>
+    
+    <!-- 取得课程分类 -->
+    <select id="getKcfl" resultType="hashMap">
+        SELECT t.fldm, t.fldm2, t.zjpjfl, t.ddpjfl
+		  FROM jxpj_jcsj_kcflxx t
+		 WHERE t.kcdm = #{kcdm}
+		   AND rownum = 1
+    </select>
+    
+    <!-- 取得业务问卷配置列表 -->
+    <select id="getWjpz" resultType="hashMap">
+        SELECT *
+		  FROM jxpj_jbpz_wjpzb t
+		 WHERE t.kcfl = #{kcfl}
+		   AND t.pjlx = #{pjlx}
+		   AND t.djrylx = #{djrylx}
+		   AND rownum = 1
+    </select>
+</mapper>

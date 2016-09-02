@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zfsoft.evaluation.dao.daointerface.IGraduationEvaluationDao">
+	<resultMap id="graduationEvaluationMap" type="com.zfsoft.evaluation.entity.GraduationEvaluationEntity">
+        <result property="kssj"     column="kssj" /> <!-- 开始时间 -->
+        <result property="jssj"     column="jssj" /> <!-- 结束时间 -->
+        <result property="xz"       column="xz" /> <!-- 学制 -->
+        
+        <result property="id"       column="id" /> <!-- 评价ID -->
+        <result property="zt"       column="zt" /> <!-- 状态(0未评价；1已评价；2无效) -->
+        <result property="xh"       column="xh" /> <!-- 学号 -->
+        <result property="pjsj"     column="pjsj" /> <!-- 评价时间 -->
+        
+        <result property="kcdm"     column="kcdm" /> <!-- 课程编号 -->
+        <result property="kcmc"     column="kcmc" /> <!-- 课程名称 -->
+        <result property="jszgh"    column="jszgh" /> <!-- 教师职工号 -->
+        <result property="jsxm"     column="jsxm" /> <!-- 教师姓名 -->
+        
+        <result property="xm"       column="xm" /> <!-- 姓名 -->
+        <result property="xb"       column="xb" /> <!-- 性别 -->
+        <result property="xy"       column="xy" /> <!-- 学院 -->
+        <result property="zymc"     column="zymc" /> <!-- 专业 -->
+        <result property="xzb"      column="xzb" /> <!-- 行政班 -->
+        <result property="cc"       column="cc" /> <!-- 层次 -->
+    </resultMap>
+    
+    <resultMap id="graduationEvaluationResultMap" type="com.zfsoft.evaluation.entity.GraduationEvaluationResultEntity">
+        <result property="id"       column="id" /> <!-- id -->
+        <result property="zbx"      column="zbx" /> <!-- 指标项 -->
+        <result property="da"       column="da" /> <!-- 答案 -->
+        <result property="pjid"     column="pjid" /> <!-- 评价ID -->
+    </resultMap>
+
+<!-- ======================================================================================================================= -->
+
+  	<!-- 查询毕业评价设置记录 -->
+    <select id="getGraduationSetting" resultType="com.zfsoft.evaluation.entity.GraduationEvaluationEntity">
+        SELECT kssj,jssj,xz FROM jxpj_bypj_pjpz t WHERE xz = #{xz }
+    </select>
+    
+    <!-- 保存毕业评价设置 -->
+    <insert id="saveGraduationSetting" parameterType="com.zfsoft.evaluation.entity.GraduationEvaluationEntity">
+        <![CDATA[
+            INSERT INTO jxpj_bypj_pjpz
+            (kssj,jssj,xz,xgsj)
+            values(
+                #{kssj,jdbcType=VARCHAR},
+                #{jssj,jdbcType=VARCHAR},
+                #{xz,jdbcType=VARCHAR},
+                sysdate
+            )
+        ]]>
+    </insert>
+    
+    <!-- 删除毕业评价设置  -->
+    <delete id="deleteGraduationSetting">
+        DELETE FROM jxpj_bypj_pjpz t WHERE t.xz = #{xz }
+    </delete>
+    
+ <!-- ======================================================================================================================= -->  
+  
+ 	<!-- 通过用户ID获取学制 -->
+    <select id="getXzByXh" resultType="String">
+        SELECT t.xz FROM jxpj_jcsj_xsxx t WHERE t.xh = #{xh }
+    </select>
+ 	
+ 	<!-- 通过用户ID判断是不是毕业生 -->
+    <select id="isGraduate" resultType="int">
+        SELECT COUNT(1) FROM jxpj_bypj_kcxx t WHERE t.xh = #{xh }
+    </select>
+ 
+ 	<!-- 通过用户ID获取在校期间所学所有课程 -->
+    <select id="getLessonListByXh" resultMap="graduationEvaluationMap">
+        SELECT t.xh, t.kcdm, t.kcmc
+		  FROM jxpj_bypj_kcxx t
+		 WHERE t.xh = #{xh }
+		 GROUP BY t.xh, t.kcdm, t.kcmc
+		 ORDER BY t.kcdm
+    </select>
+    
+    <!-- 通过用户ID获取在校期间所学所有课程教师 -->
+    <select id="getTeacherByXh" resultMap="graduationEvaluationMap">
+        SELECT t.xh, t.jszgh, t.jsxm
+		  FROM jxpj_bypj_kcxx t
+		 WHERE t.xh = #{xh }
+		 GROUP BY t.xh, t.jszgh, t.jsxm
+		 ORDER BY t.jszgh
+    </select>
+ 
+ <!-- ======================================================================================================================= --> 
+ 
+ 	<!-- 保存毕业评价 -->
+    <insert id="saveGraduationEvaluation" parameterType="com.zfsoft.evaluation.entity.GraduationEvaluationEntity">
+        <![CDATA[
+            INSERT INTO jxpj_bypj_pjgl
+            (id,xh,zt)
+            values(
+                #{id},
+                #{xh,jdbcType=VARCHAR},
+                '0'
+            )
+        ]]>
+        <selectKey resultType="java.lang.String" order="BEFORE" keyProperty="id">
+            <![CDATA[
+            SELECT SYS_GUID() ID FROM DUAL
+            ]]>
+        </selectKey>
+    </insert>
+    
+    <!-- 修改毕业评价  -->
+    <update id="modifyGraduationEvaluation">
+        UPDATE jxpj_bypj_pjgl t SET t.pjsj = SYSDATE, t.zt = #{zt} WHERE t.id=#{id}
+    </update>
+
+    <!-- 查询毕业评价数量 -->
+    <select id="getGraduationEvaluationCount" resultType="int">
+        SELECT COUNT(1) FROM jxpj_bypj_pjgl t LEFT JOIN jxpj_jcsj_xsxx x ON x.xh = t.xh
+        <include refid="listWhere"/>
+    </select>
+    
+    <!-- 查询毕业评价列表 -->
+    <select id="getGraduationEvaluationList" resultMap="graduationEvaluationMap">
+        select * from (select a.*, rownum rn from (
+        SELECT t.zt,
+		       t.xh,
+		       t.pjsj,
+		       x.xm,
+		       x.xb,
+		       x.xy,
+		       x.zymc,
+		       x.xzb,
+		       x.cc
+		  FROM jxpj_bypj_pjgl t
+		  LEFT JOIN jxpj_jcsj_xsxx x ON x.xh = t.xh
+        <include refid="listWhere"/>
+      order by x.xy,t.xh
+        ) a )
+        <![CDATA[
+        where rn >= #{startRow} and rn <= #{endRow}
+        ]]>
+    </select>
+    
+    <!-- 提取查询条件 -->	
+    <sql id="listWhere">
+    	<where>
+        	1 = 1
+        	<if test="xh != null and xh != ''">
+            	and t.xh like '%' || #{xh} || '%'
+          	</if>
+          	<if test="zt != null and zt != ''">
+            	and t.zt = #{zt}
+          	</if>
+          	<if test="xm != null and xm != ''">
+            	and x.xm like '%' || #{xm} || '%'
+          	</if>
+          	<if test="xy != null and xy != ''">
+            	and x.xy like '%' || #{xy} || '%'
+          	</if>
+          	<if test="zymc != null and zymc != ''">
+            	and x.zymc like '%' || #{zymc} || '%'
+          	</if>
+          	<if test="xzb != null and xzb != ''">
+            	and x.xzb like '%' || #{xzb} || '%'
+          	</if>
+          	<if test="condition != null and condition != ''">
+            	${condition}
+          	</if>
+        </where>
+    </sql>
+    
+    <!-- 根据学号查询单条评价记录 -->
+    <select id="getGraduationEvaluationByXh" resultMap="graduationEvaluationMap">
+        SELECT * FROM jxpj_bypj_pjgl t WHERE t.xh = #{xh}
+    </select>
+    
+    <!-- 根据评价ID查询评价结果列表 -->
+    <select id="getGraduationEvaluationResultByPjid" resultMap="graduationEvaluationResultMap">
+        SELECT t.id,
+		       t.pjid,
+		       t.zbx,
+		       (CASE
+		         WHEN t.zbx = 'teacher' THEN
+		          (SELECT k.jsxm
+		             FROM jxpj_bypj_kcxx k
+		            WHERE k.jszgh = t.da
+		              AND Rownum = 1)
+		         WHEN t.zbx = 'harvestLesson' OR t.zbx = 'hardLesson' THEN
+		          (SELECT k.kcmc
+		             FROM jxpj_bypj_kcxx k
+		            WHERE k.kcdm = t.da
+		              AND Rownum = 1)
+		         ELSE
+		          t.da
+		       END) da
+		  FROM jxpj_bypj_pjjg t
+		 WHERE t.pjid =  #{pjid}
+    </select>
+    
+    <!-- 统计评价指标为教师的结果 -->
+    <select id="summaryTeacherResult" resultType="hashmap">
+    	<![CDATA[
+	    select * from (select a.*, rownum rn from (
+	        SELECT (SELECT o.xm || '[' || a.da || ']'
+			          FROM overall o
+			         WHERE o.gh = a.da
+			           AND rownum = 1) da,
+			       a.zb, a.pjs, a.zs
+			  FROM (SELECT t.da,
+			               round(COUNT(1) /
+			                     (SELECT COUNT(1)
+			                        FROM (SELECT DISTINCT t1.pjid FROM jxpj_bypj_pjjg t1)),
+			                     2)*100 zb,
+			                     COUNT(1) pjs,
+				               	(SELECT COUNT(1) FROM (SELECT DISTINCT t1.pjid FROM jxpj_bypj_pjjg t1)) zs
+			          FROM jxpj_bypj_pjjg t
+			          LEFT JOIN jxpj_bypj_pjgl t1
+			            ON t.pjid = t1.id
+			          LEFT JOIN jxpj_jcsj_xsxx t2
+			            ON t1.xh = t2.xh
+			         WHERE t.zbx = #{zbx}
+			]]>
+			        <if test="xy != null and xy != ''">
+		            	AND t2.xy = (SELECT z.bmmc FROM hrm_bzgl_zzjgb z WHERE z.bmdm = #{xy})
+		          	</if>
+		          	<if test="zymc != null and zymc != ''">
+		            	AND t2.zymc = (SELECT y.zymc FROM jxpj_jcsj_zyxx y WHERE y.zydm = #{zymc}))
+		          	</if>
+          	<![CDATA[
+			         GROUP BY t.da) a
+			 ORDER BY a.zb DESC
+			) a )
+	    where rn >= #{startRow} and rn <= #{endRow}
+		 ]]>
+    </select>
+    
+    <!-- 统计评价指标为课程的结果 -->
+    <select id="summaryLessonResult" resultType="hashmap">
+    	<![CDATA[
+    	select * from (select a.*, rownum rn from (
+	        SELECT (SELECT j.kcmc || '[' || a.da || ']'
+			          FROM jxpj_jcsj_jxrwb j
+			         WHERE j.kcdm = a.da
+			           AND rownum = 1) da,
+			       a.zb, a.pjs, a.zs
+			  FROM (SELECT t.da,
+			               round(COUNT(1) /
+			                     (SELECT COUNT(1)
+			                        FROM (SELECT DISTINCT t1.pjid FROM jxpj_bypj_pjjg t1)),
+			                     2)*100 zb,
+			                     COUNT(1) pjs,
+				               	(SELECT COUNT(1) FROM (SELECT DISTINCT t1.pjid FROM jxpj_bypj_pjjg t1)) zs
+			          FROM jxpj_bypj_pjjg t
+			          LEFT JOIN jxpj_bypj_pjgl t1
+			            ON t.pjid = t1.id
+			          LEFT JOIN jxpj_jcsj_xsxx t2
+			            ON t1.xh = t2.xh
+			         WHERE t.zbx = #{zbx}
+			]]>
+			        <if test="xy != null and xy != ''">
+		            	AND t2.xy = (SELECT z.bmmc FROM hrm_bzgl_zzjgb z WHERE z.bmdm = #{xy})
+		          	</if>
+		          	<if test="zymc != null and zymc != ''">
+		            	AND t2.zymc = (SELECT y.zymc FROM jxpj_jcsj_zyxx y WHERE y.zydm = #{zymc}))
+		          	</if>
+          	<![CDATA[	         
+			         GROUP BY t.da) a
+			 ORDER BY a.zb DESC
+			 ) a )
+	    where rn >= #{startRow} and rn <= #{endRow}
+		 ]]>
+    </select>
+    <!-- 统计评价指标为单选的结果 -->
+    <select id="summaryRadioResult" resultType="hashmap">
+    	<![CDATA[
+    	select * from (select a.*, rownum rn from (
+	    	SELECT a.da, a.zb, a.pjs, a.zs
+			  FROM (SELECT t.da,
+			               round(COUNT(1) /
+			                     (SELECT COUNT(1)
+			                        FROM (SELECT DISTINCT t1.pjid FROM jxpj_bypj_pjjg t1)),
+			                     2)*100 zb,
+			                     COUNT(1) pjs,
+				               	(SELECT COUNT(1) FROM (SELECT DISTINCT t1.pjid FROM jxpj_bypj_pjjg t1)) zs
+			          FROM jxpj_bypj_pjjg t
+			          LEFT JOIN jxpj_bypj_pjgl t1
+			            ON t.pjid = t1.id
+			          LEFT JOIN jxpj_jcsj_xsxx t2
+			            ON t1.xh = t2.xh
+			         WHERE t.zbx = #{zbx}
+			 ]]>
+			        <if test="xy != null and xy != ''">
+		            	AND t2.xy = (SELECT z.bmmc FROM hrm_bzgl_zzjgb z WHERE z.bmdm = #{xy})
+		          	</if>
+		          	<if test="zymc != null and zymc != ''">
+		            	AND t2.zymc = (SELECT y.zymc FROM jxpj_jcsj_zyxx y WHERE y.zydm = #{zymc}))
+		          	</if>
+          	<![CDATA[
+			         GROUP BY t.da) a
+			 ORDER BY a.zb DESC
+			 ) a )
+	    where rn >= #{startRow} and rn <= #{endRow}
+		 ]]>
+ 	</select>
+    
+    <!-- 根据评价ID删除评价结果 -->
+    <delete id="deleteGraduationEvaluationResultByPjid">
+        DELETE FROM jxpj_bypj_pjjg t WHERE t.pjid = #{pjid}
+    </delete>
+    
+    <!-- 保存评价结果 -->
+    <insert id="addGraduationEvaluationResult" parameterType="com.zfsoft.evaluation.entity.GraduationEvaluationResultEntity">
+    	 <![CDATA[
+            INSERT INTO jxpj_bypj_pjjg
+            (id,pjid,zbx,da)
+            values(
+                #{id},
+                #{pjid,jdbcType=VARCHAR},
+                #{zbx,jdbcType=VARCHAR},
+                #{da,jdbcType=VARCHAR}
+            )
+        ]]>
+        <selectKey resultType="java.lang.String" order="BEFORE" keyProperty="id">
+            <![CDATA[
+            SELECT SYS_GUID() ID FROM DUAL
+            ]]>
+        </selectKey>
+    </insert>
+ </mapper>

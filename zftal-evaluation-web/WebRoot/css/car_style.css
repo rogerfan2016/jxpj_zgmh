@@ -1,0 +1,37 @@
+/*评价商品CSS*/
+.pjk{ overflow:hidden; background:#f0edee;}
+.pjxx{ width:100%; height:2.2rem; overflow:hidden; background:#fff; border-bottom:1px solid #dfdfdf; border-top:1px solid #dfdfdf; margin:0.44rem auto;}
+.pjxx p{ float: left; margin-left: 0.7rem; line-height: 2.2rem; font-size: 0.72rem}
+.pjxx ul{ width:50%; height:2.2rem; float: right; margin-right: 0.7rem; overflow:hidden; background:url(../image/xing.jpg) no-repeat; background-size:100% auto;}
+.pjxx ul li{ float:left; width:20%; height:1.2rem; margin:0.5rem auto;}
+
+.all_che{ width:54%; height:1.1rem; margin:0.55rem 23%; overflow:hidden;}
+.check{ position:relative; float:left; width:1.1rem; height:1.1rem; overflow:hidden; margin:0 0 0 0.2rem;}
+.check input,.all input{ appearance:none; -moz-appearance:none; -webkit-appearance:none; -o-appearance:none; -ms-appearance:none; visibility: hidden;}
+.check input + label,.all input + label{ position:absolute; top:0; left:0; width:1.1rem; height:1.1rem; overflow:hidden; background:url(../image/checkxx.png) no-repeat; background-size:100% auto;}
+.check input:checked + label,.all input:checked + label{ background-position:0 -1.1rem;}
+.pjnr{ width:100%; height:auto; margin:0 auto; overflow:hidden; background:#fff;}
+.pjnr .liuy{ width:100%; height:5.02rem; border-bottom:1px solid #dfdfdf; border-top:1px solid #dfdfdf; overflow:hidden;}
+.pjnr .liuy textarea{ width:90%; height:4.4rem; border:none; margin:0.31rem 5%; outline:none; color:#b3b3b3; font-size:0.6rem;}
+.pjnr .up_load{ width:100%; height:2.4rem; margin:0 auto; overflow:hidden;}
+.pjnr .up_load .up_wz{ width:50%; height:2.4rem; float:left; overflow:hidden; text-align:left; line-height:2.4rem; font-size:0.48rem; color:#b3b3b3; display:block; text-indent:0.7rem;}
+.pjnr .up_load .pic_show{ width:50%; height:2.4rem; float:left; overflow:hidden; display:none;}
+.pic_show ul{ width:100%; height:auto; margin:0 auto; overflow:hidden;}
+.pic_show ul li{ width:1.6rem; height:1.6rem; float:left; background:#b3b3b3; margin:0.5rem 0.22rem;}
+.pjnr .up_load .up_btn{ width:100%; height:2.4rem; float:left; overflow:hidden;}
+/*.pjnr .up_load .up_btn #sc{ width:1.74rem; height:1.12rem; display:none;}*/
+.pjnr .up_load .up_btn #mybutton{ width:1.74rem; height:1.12rem; border-radius:5px; border:1px solid #dfdfdf; background:url(../image/up_load.png) center no-repeat; background-size:100% auto; margin:0.64rem auto; float:left;}
+.pjnr .up_load .up_btn #tj{ width:80%; height:1.6rem; margin:0.64rem auto; background:#5eb95e; border-radius:5px; font-size:0.8rem; line-height:1.6rem; text-align:center; color:#fefefe; position:relative;}
+
+.f_mask{ width:100%; height:100%; position:fixed; top:0; z-index:999; display:none;}
+.sh_suc{ width:6.16rem; height:4.58rem; position:relative; left:50%; margin-left:-3.08rem; margin-top:6rem; border-radius:5px; background:rgba(0,0,0,0.4);}
+.sh_suc img{ width:100%; height:auto;}
+
+.all_sw{ width:100%; height:auto; margin:0 auto; overflow:hidden;}
+.dfk_kong{ width:49.6%; height:7.68rem; margin:5rem 25.2%; overflow:hidden;}
+.kong_pic{ width:100%; height:5.88rem; margin:0 auto; overflow:hidden;}
+.kong_pic img{ width:100%; height:auto;}
+.k_btn{ width:54.8%; height:1.24rem; background:#ff5a54; text-align:center; line-height:1.24rem; color:#fff; border-radius:5px; font-size:0.56rem;  margin:0 22.6%;}
+.tChose{ overflow: hidden; padding: 0 0.7rem 0.4rem 0.7rem;}
+.tChose li{ float: left; padding: 0.2rem; margin-top: 0.4rem; margin-right: 0.4rem;  border:1px solid #ccc; font-size: 0.62rem; color: #ccc; border-radius: 0.7rem; }
+.tChose li.changeOn{ border-color:#ff5a54 ; color:#ff5a54 ;}

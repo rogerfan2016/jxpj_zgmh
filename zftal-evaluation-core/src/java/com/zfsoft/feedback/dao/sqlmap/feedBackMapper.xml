@@ -1,0 +1,558 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zfsoft.feedback.dao.daointerface.IFeedBackDao">
+	<resultMap id="feedBackMap" type="com.zfsoft.feedback.entity.FeedBackEntity">
+		<result property="xn"     column="xn" /> <!-- 学年 -->
+		<result property="xq"     column="xq" /> <!-- 学期 -->
+        <result property="xxid"     column="xxid" /> <!-- 信息ID -->
+        <result property="xxfl"     column="xxfl" /> <!-- 信息分类(0学生类1课程类2教师类3教学环境保障类) -->
+        <result property="xxlx"     column="xxlx" /> <!-- 信息类型 (0普通1紧急)-->
+        <result property="xxnrlx"     column="xxnrlx" /> <!-- 信息内容类型(0表扬1意见/建议2紧急事件) -->
+        <result property="xxnr"     column="xxnr" /> <!-- 信息内容 -->
+        <result property="kcdm"     column="kcdm" /> <!-- 课程代码 -->
+        <result property="kcmc"     column="kcmc" /> <!-- 课程名称 -->
+        <result property="kkxy"     column="kkxy" /> <!-- 开课学院 -->
+        <result property="skjsgh"     column="skjsgh" /> <!-- 授课教师工号 -->
+        <result property="skjsxm"     column="skjsxm" /> <!-- 授课教师姓名 -->
+        <result property="jsszdw"     column="jsszdw" /> <!-- 教师所在单位 -->
+        <result property="zt"     column="zt" /> <!-- 状态(0已提交1处理中2已反馈3已评价) -->
+        <result property="cjr"     column="cjr" /> <!-- 创建人 -->
+        <result property="cjsj"     column="cjsj" /> <!-- 创建时间 -->
+        <result property="clhj"     column="clhj" /> <!-- 处理环节(0单位管理员筛选1责任人处理2责任人反馈3单位管理员反馈4信息员评价) -->
+        <result property="clr"     column="clr" /> <!-- 处理人 -->
+        <result property="fkjg"     column="fkjg" /> <!-- 反馈结果 -->
+        <result property="pjjg"     column="pjjg" /> <!-- 评价结果 -->
+        <result property="pjsj"     column="pjsj" /> <!-- 评价时间 -->
+        <result property="xsszxy"     column="xsszxy" /> <!-- 学生所在学院 -->
+        <collection property="feedBackLogList" column="{xxid=xxid}" select="com.zfsoft.feedback.dao.daointerface.IFeedBackDao.getFeedBackLogEntityByXxid"/>
+        </resultMap>
+    
+    <resultMap id="feedBackLogMap" type="com.zfsoft.feedback.entity.FeedBackLogEntity">
+        <result property="rzid"       column="rzid" /> <!-- 日志ID -->
+        <result property="xxid"      column="xxid" /> <!-- 信息ID -->
+        <result property="rznr"       column="rznr" /> <!-- 日志内容 -->
+        <result property="czr"     column="czr" /> <!-- 操作人 -->
+        <result property="czsj"     column="czsj" /> <!-- 操作时间 -->
+        <result property="sfcs"     column="sfcs" /> <!-- 是否超时 -->
+    </resultMap>
+    
+    <resultMap id="feedBackStaffMap" type="com.zfsoft.feedback.entity.FeedBackStaffEntity">
+        <result property="id"       column="id" /> <!-- id -->
+        <result property="xh"       column="xh" /> <!-- 学号 -->
+        <result property="ssz"       column="ssz" /> <!-- 所属组 -->
+        <result property="sfzz"       column="sfzz" /> <!-- 是否组长 -->
+        <result property="zt"       column="zt" /> <!-- 状态(0删除；1正常) -->
+        
+        <result property="xm"       column="xm" /> <!-- 姓名 -->
+        <result property="xb"       column="xb" /> <!-- 性别 -->
+        <result property="xy"       column="xy" /> <!-- 学院 -->
+        <result property="zymc"       column="zymc" /> <!-- 专业 -->
+        <result property="xzb"       column="xzb" /> <!-- 行政班 -->
+    </resultMap>
+    
+    <resultMap id="courseMap" type="com.zfsoft.feedback.entity.CourseQuery" >
+    	<result property="globalid"     column="globalid" /> <!-- 全局ID -->
+    	<result property="kcid"     column="kcid" /> <!-- 课程ID -->
+    	<result property="kcdm"     column="kcdm" /> <!-- 课程代码 -->
+        <result property="kcmc"     column="kcmc" /> <!-- 课程名称 -->
+        <result property="kkxy"     column="kkxy" /> <!-- 开课学院 -->
+        <result property="skjsgh"     column="skjsgh" /> <!-- 授课教师工号 -->
+        <result property="skjsxm"     column="skjsxm" /> <!-- 授课教师姓名 -->
+        <result property="jsszdw"     column="jsszdw" /> <!-- 教师所在单位 -->
+    </resultMap>
+
+ <!-- ======================================================信息员增删改查管理=============================================================== -->
+	<!-- 保存信息员 -->
+	<insert id="insertFeedBackStaff" parameterType="com.zfsoft.feedback.entity.FeedBackStaffEntity">
+		<![CDATA[
+			insert into
+                JXPJ_XXFK_XXYB t(
+                    t.id,
+                    t.xh,
+                    t.ssz,
+                    t.sfzz,
+                    t.zt,
+                    t.xn,
+                    t.xq
+                )
+            values(
+                #{id},
+                #{xh,jdbcType=VARCHAR},
+                #{ssz,jdbcType=VARCHAR},
+                #{sfzz,jdbcType=VARCHAR},
+                '1',
+                #{xn,jdbcType=VARCHAR},
+                #{xq,jdbcType=VARCHAR}
+            )
+		]]>
+		<selectKey resultType="java.lang.String" order="BEFORE" keyProperty="id">
+            <![CDATA[
+            SELECT SYS_GUID() ID FROM DUAL
+            ]]>
+        </selectKey>
+	</insert>
+	
+	<!-- 修改信息员 -->
+    <update id="modifyFeedBackStaff">
+        update JXPJ_XXFK_XXYB 
+        set id = #{id}
+        <if test="xh != null and xh != ''">
+            ,xh = #{xh}
+        </if>
+        <if test="ssz != null and ssz != ''">
+            ,ssz = #{ssz}
+        </if>
+        <if test="sfzz != null and sfzz != ''">
+            ,sfzz = #{sfzz}
+        </if>
+        <if test="zt != null and zt != ''">
+            ,zt = #{zt}
+        </if>
+        <if test="xn != null and xn != ''">
+            ,xn = #{xn}
+        </if>
+        <if test="xq != null and xq != ''">
+            ,xq = #{xq}
+        </if>
+        where id = #{id}
+    </update>
+    
+    <!-- 删除信息员 -->
+    <delete id="deleteFeedBackStaff">
+    	delete from JXPJ_XXFK_XXYB t
+        <where>
+        	1=1
+          <if test="xh != null and xh != ''">
+            and t.xh = #{xh}
+          </if>
+          <if test="id != null and id != ''">
+            and t.id = #{id}
+          </if>
+        </where>
+    </delete>
+    <delete id="deleteFeedBackStaffByIds" parameterType="java.lang.String">
+    	delete from JXPJ_XXFK_XXYB where 1=1 and id in 
+    	<foreach collection="ids" item="item" open="(" separator="," close=")">  
+            #{item}   
+        </foreach> 
+    </delete>
+    
+    <!-- 查询消息员列表数据 -->
+    <select id="getFeedBackStaffList" resultMap="feedBackStaffMap">
+    	select * from (select c.*, rownum rn from (
+        	SELECT xxy.id,xxy.xh,xxy.sfzz,xxy.zt,xxy.xn,xxy.xq,k.xm, k.xb,k.xy,k.zymc,k.xzb,dm.tmxx as ssz
+            FROM JXPJ_XXFK_XXYB xxy
+		  	LEFT JOIN JXPJ_JCSJ_XSXX  k ON k.xh = xxy.xh
+		  	LEFT JOIN hrm_xtgl_dmtmb dm on xxy.ssz = dm.tmid
+		  	LEFT JOIN hrm_xtgl_dmbmb dmbmd on dm.ssbm = dmbmd.bmid
+		  	LEFT JOIN hrm_bzgl_zzjgb zzjgb on zzjgb.bmmc=k.xy
+       	 	<include refid="listWhere"/>
+        	ORDER BY xxy.id
+    	) c )
+        <![CDATA[
+        where rn >= #{startRow} and rn <= #{endRow}
+        ]]>
+    </select>
+    <!-- 查询消息员列表数据数量 -->
+    <select id="getFeedBackStaffCount" resultType="int">
+        SELECT count(1)
+		FROM JXPJ_XXFK_XXYB xxy
+		LEFT JOIN JXPJ_JCSJ_XSXX  k ON k.xh = xxy.xh
+		LEFT JOIN hrm_xtgl_dmtmb dm on xxy.ssz = dm.tmid
+		LEFT JOIN hrm_xtgl_dmbmb dmbmd on dm.ssbm = dmbmd.bmid
+		LEFT JOIN hrm_bzgl_zzjgb zzjgb on zzjgb.bmmc=k.xy
+        <include refid="listWhere"/>
+    </select>
+    <!-- 根据ID查询 -->
+    <select id="getFeedBackStaffById" parameterType="java.lang.String" resultMap="feedBackStaffMap">
+    	SELECT * FROM JXPJ_XXFK_XXYB where id=#{id}
+    </select>
+    
+    <!-- 提取查询条件 -->	
+    <sql id="listWhere">
+    	<where>
+        	1=1
+          <if test="xh != null and xh != ''">
+            and xxy.xh = #{xh}
+          </if>
+          <if test="xm != null and xm != ''">
+            and k.xm like '%' || #{xm} || '%'
+          </if>
+          <if test="xy != null and xy != ''">
+            <!-- and k.xy  like '%' || #{xy} || '%' -->
+            and zzjgb.bmdm = #{xy}
+          </if>
+          <if test="ssz != null and ssz != ''">
+            and dm.tmid = #{ssz}
+          </if>
+          <if test="sfzz != null and sfzz != ''">
+            and xxy.sfzz like '%' || #{sfzz} || '%'
+          </if>
+          <if test="ssbm != null and ssbm != ''">
+            and dmbmd.bmid = #{ssbm}
+          </if>
+          <if test="xn != null and xn != ''">
+            and xxy.xn = #{xn}
+          </if>
+          <if test="xq != null and xq != ''">
+            and xxy.xq = #{xq}
+          </if>
+        </where>
+    </sql>
+	    
+ <!-- =====================================================信息反馈管理================================================================== -->  
+  <!-- 保存信息员 -->
+	<insert id="insertFeedBack" parameterType="com.zfsoft.feedback.entity.FeedBackEntity">
+		<![CDATA[
+			insert into
+                JXPJ_XXFK_FKXXB t(
+                	t.XN,
+                	t.XQ,
+                    t.XXID,
+                    t.XXFL,
+                    t.XXLX,
+                    t.XXNRLX,
+                    t.XXNR,
+                    t.KCDM,
+                    t.KCMC,
+                    t.KKXY,
+                    t.SKJSGH,
+                    t.SKJSXM,
+                    t.JSSZDW,
+                    t.ZT,
+                    t.CJR,
+                    t.CJSJ,
+                    t.CLHJ,
+                    t.XSSZXY
+                )
+            values(
+            	#{xn},
+            	#{xq}
+                #{xxid},
+                #{xxfl,jdbcType=VARCHAR},
+                #{xxlx,jdbcType=VARCHAR},
+                #{xxnrlx,jdbcType=VARCHAR},
+                #{xxnr,jdbcType=VARCHAR},
+                #{kcdm,jdbcType=VARCHAR},
+                #{kcmc,jdbcType=VARCHAR},
+                #{kkxy,jdbcType=VARCHAR},
+                #{skjsgh,jdbcType=VARCHAR},
+                #{skjsxm,jdbcType=VARCHAR},
+                #{jsszdw,jdbcType=VARCHAR},
+                '0',
+                #{cjr,jdbcType=VARCHAR},
+                sysdate,
+                '0',
+                #{xsszxy,jdbcType=VARCHAR}
+            )
+		]]>
+	</insert>
+ 
+ 	<!-- 获取课程信息 -->
+ 	<select id="getCourse" resultMap="courseMap">
+ 		SELECT c.globalid,
+		       c.kcid,
+		       c.kcmc,
+		       c.kkxy,
+		       c.rklsgh   skjsgh,
+		       substr(c.kcid,15,8)  kcdm,
+		       js.bm      jsszdw,
+		       js.xm      skjsxm
+		  FROM jxpj_jcsj_kcbxx c
+		  LEFT JOIN jxpj_jcsj_jsxx js
+		    ON c.rklsgh = js.zgh
+ 		<where>
+ 			1=1
+ 			<if test="kcid != null and kcid != ''">
+           		and c.kcid = #{kcid}
+          	</if>
+          	<if test="globalid != null and globalid != ''">
+           		and c.globalid = #{globalid}
+          	</if>
+ 		</where>
+ 	</select>
+ 	<!-- 根据信息ID获取单条信息反馈数据 -->
+    <select id="getFeedbackByXxid" resultMap="feedBackMap">
+ 		SELECT t.xn,t.xq,t.xxid,t.xxfl,t.xxlx,t.xxnrlx,t.xxnr,t.clhj,t.zt,t.kcdm,t.kcmc,t.kkxy,t.skjsgh,t.skjsxm,t.jsszdw,t.cjsj
+            FROM JXPJ_XXFK_FKXXB t
+         WHERE t.xxid = #{xxid}
+ 	</select>
+ 	
+ 	<!-- 查询信息反馈列表数据 -->
+    <select id="getFeedBackList" resultMap="feedBackMap">
+    	select * from (select c.*, rownum rn from (
+        	SELECT fkxx.xn,fkxx.xq,fkxx.xxid,fkxx.xxfl,fkxx.xxlx,fkxx.xxnrlx,fkxx.kcmc,fkxx.kkxy,
+        		   fkxx.skjsxm,fkxx.jsszdw,fkxx.clhj,fkxx.zt,fkxx.xxnr,fkxx.cjsj
+            FROM JXPJ_XXFK_FKXXB fkxx
+       	 	<include refid="feedBackListWhere"/>
+        	ORDER BY fkxx.cjsj desc
+    	) c )
+        <![CDATA[
+        where rn >= #{startRow} and rn <= #{endRow}
+        ]]>
+    </select>
+    <!-- 查询消息员列表数据数量 -->
+    <select id="getFeedBackCount" resultType="int">
+		SELECT count(1)
+        FROM JXPJ_XXFK_FKXXB fkxx
+        <include refid="feedBackListWhere"/>
+    </select>
+    
+    <!-- 单位管理员处理反馈信息列表 -->
+    <select id="getUnitHandleFeedBackList" resultMap="feedBackMap">
+    	select * from (select c.*, rownum rn from (
+        	SELECT fkxx.xn,fkxx.xq,fkxx.xxid,fkxx.xxfl,fkxx.xxlx,fkxx.xxnrlx,fkxx.kcmc,fkxx.kkxy,fkxx.skjsxm,fkxx.jsszdw,fkxx.clhj,fkxx.zt
+            FROM JXPJ_XXFK_FKXXB fkxx
+       	 	<where>
+       	 		1=1
+       	 		<if test="xn != null and xn != ''">
+	            	and fkxx.xn = #{xn}
+	          	</if>
+	          	<if test="xq != null and xq != ''">
+	            	and fkxx.xq = #{xq}
+	          	</if>
+	          	<!-- 当前操作人所在单位 -->
+	          	<if test="czrszdw != null and czrszdw != ''">
+	            	and (fkxx.kkxy = #{czrszdw} or fkxx.jsszdw = #{czrszdw} or (fkxx.xxfl=='0' and fkxx.xsszxy=#{czrszdw}))
+	          	</if>
+       	 		<if test="xxfl != null and xxfl != ''">
+	            	and fkxx.xxfl = #{xxfl}
+	          	</if>
+	          	<if test="xxlx != null and xxlx != ''">
+	            	and fkxx.xxlx = #{xxlx}
+	          	</if>
+	           	<if test="xxnrlx != null and xxnrlx != ''">
+	            	and fkxx.xxnrlx = #{xxnrlx}
+	          	</if>
+	          	<if test="zt != null and zt != ''">
+	          		<if test="zt==0">
+	          			and (fkxx.clhj = '0' or fkxx.clhj='2')
+	          		</if>
+	                <if test="zt==1">
+	          			and (fkxx.clhj != '0' and fkxx.clhj != '2')
+	          		</if>
+	            </if>
+       	 	</where>
+        	ORDER BY fkxx.cjsj
+    	) c )
+        <![CDATA[
+        where rn >= #{startRow} and rn <= #{endRow}
+        ]]>
+    </select>
+    <!-- 单位管理员处理反馈信息列表数量 -->
+    <select id="getUnitHandleFeedBackCount" resultType="int">
+		SELECT count(1)
+        FROM JXPJ_XXFK_FKXXB fkxx
+        <where>
+   	 		1=1
+   	 		<if test="xn != null and xn != ''">
+	            and fkxx.xn = #{xn}
+	        </if>
+	        <if test="xq != null and xq != ''">
+	            and fkxx.xq = #{xq}
+	        </if>
+          	<!-- 当前操作人所在单位 -->
+          	<if test="czrszdw != null and czrszdw != ''">
+            	and (fkxx.kkxy = #{czrszdw} or fkxx.jsszdw = #{czrszdw} or (fkxx.xxfl=='0' and fkxx.xsszxy=#{czrszdw}))
+          	</if>
+      	 	<if test="xxfl != null and xxfl != ''">
+            	and fkxx.xxfl = #{xxfl}
+          	</if>
+          	<if test="xxlx != null and xxlx != ''">
+            	and fkxx.xxlx = #{xxlx}
+          	</if>
+           	<if test="xxnrlx != null and xxnrlx != ''">
+            	and fkxx.xxnrlx = #{xxnrlx}
+          	</if>
+          	<if test="zt != null and zt != ''">
+          		<if test="zt==0">
+          			and (fkxx.clhj = '0' or fkxx.clhj='2')
+          		</if>
+                <if test="zt==1">
+          			and (fkxx.clhj != '0' and fkxx.clhj != '2')
+          		</if>
+            </if>
+   	 	</where>
+    </select>
+    
+    <!-- 责任人/单位处理反馈信息列表 -->
+    <select id="getPersonHandleFeedBackList" resultMap="feedBackMap">
+    	select * from (select c.*, rownum rn from (
+        	SELECT fkxx.xn,fkxx.xq,fkxx.xxid,fkxx.xxfl,fkxx.xxlx,fkxx.xxnrlx,fkxx.kcmc,fkxx.kkxy,fkxx.skjsxm,fkxx.jsszdw,fkxx.clhj,fkxx.zt
+            FROM JXPJ_XXFK_FKXXB fkxx
+       	 	<where>
+       	 		1=1
+       	 		<if test="xn != null and xn != ''">
+	            	and fkxx.xn = #{xn}
+	          	</if>
+	          	<if test="xq != null and xq != ''">
+	            	and fkxx.xq = #{xq}
+	          	</if>
+       	 		<if test="clr != null and clr != ''">
+	            	and fkxx.clr = #{clr}
+	          	</if>
+       	 		<if test="xxfl != null and xxfl != ''">
+	            	and fkxx.xxfl = #{xxfl}
+	          	</if>
+	          	<if test="xxlx != null and xxlx != ''">
+	            	and fkxx.xxlx = #{xxlx}
+	          	</if>
+	           	<if test="xxnrlx != null and xxnrlx != ''">
+	            	and fkxx.xxnrlx = #{xxnrlx}
+	          	</if>
+	            <if test="zt != null and zt != ''">
+	          		<if test="zt==0">
+	          			and (fkxx.clhj = '0' or fkxx.clhj='1')
+	          		</if>
+	                <if test="zt==1">
+	          			and (fkxx.clhj != '0' and fkxx.clhj != '1')
+	          		</if>
+	            </if>
+       	 	</where>
+        	ORDER BY fkxx.cjsj
+    	) c )
+        <![CDATA[
+        where rn >= #{startRow} and rn <= #{endRow}
+        ]]>
+    </select>
+    <!-- 责任人/单位处理反馈信息列表数量 -->
+    <select id="getPersonHandleFeedBackCount" resultType="int">
+		SELECT count(1)
+        FROM JXPJ_XXFK_FKXXB fkxx
+        <where>
+   	 		1=1
+   	 		<if test="xn != null and xn != ''">
+	            and fkxx.xn = #{xn}
+	        </if>
+	        <if test="xq != null and xq != ''">
+	            and fkxx.xq = #{xq}
+	        </if>
+   	 		<if test="clr != null and clr != ''">
+            	and fkxx.clr = #{clr}
+          	</if>
+      	 		<if test="xxfl != null and xxfl != ''">
+            	and fkxx.xxfl = #{xxfl}
+          	</if>
+          	<if test="xxlx != null and xxlx != ''">
+            	and fkxx.xxlx = #{xxlx}
+          	</if>
+           	<if test="xxnrlx != null and xxnrlx != ''">
+            	and fkxx.xxnrlx = #{xxnrlx}
+          	</if>
+            <if test="zt != null and zt != ''">
+          		<if test="zt==0">
+          			and (fkxx.clhj = '0' or fkxx.clhj='1')
+          		</if>
+                <if test="zt==1">
+          			and (fkxx.clhj != '0' and fkxx.clhj != '1')
+          		</if>
+            </if>
+   	 	</where>
+    </select>
+    
+    <!-- 反馈信息提取查询条件 -->	
+    <sql id="feedBackListWhere">
+    	<where>
+        	1=1
+          <if test="xn != null and xn != ''">
+            and fkxx.xn = #{xn}
+          </if>
+          <if test="xq != null and xq != ''">
+            and fkxx.xq = #{xq}
+          </if>
+          <if test="xxfl != null and xxfl != ''">
+            and fkxx.xxfl = #{xxfl}
+          </if>
+          <if test="xxlx != null and xxlx != ''">
+            and fkxx.xxlx = #{xxlx}
+          </if>
+           <if test="xxnrlx != null and xxnrlx != ''">
+            and fkxx.xxnrlx = #{xxnrlx}
+          </if>
+          <if test="clhj != null and clhj != ''">
+            and fkxx.clhj = #{clhj}
+          </if>
+          <if test="zt != null and zt != ''">
+             and fkxx.zt = #{zt}
+          </if>
+          <if test="xh != null and xh != ''">
+             and fkxx.cjr = #{xh}
+          </if>
+          <if test="xxid != null and xxid != ''">
+             and fkxx.xxid = #{xxid}
+          </if>
+          <if test="xy != null and xy != ''">
+             and fkxx.kkxy = #{xy}
+          </if>
+        </where>
+    </sql>
+    
+    <!-- 修改反馈信息 -->
+    <update id="modifyFeedBack">
+        update JXPJ_XXFK_FKXXB 
+        set xxid = #{xxid}
+        <if test="fkjg != null and fkjg != ''">
+            ,fkjg = #{fkjg}
+        </if>
+        <if test="clhj != null and clhj != ''">
+            ,clhj = #{clhj}
+        </if>
+        <if test="zt != null and zt != ''">
+            ,zt = #{zt}
+        </if>
+        <if test="clr != null and clr != ''">
+            ,clr = #{clr}
+        </if>
+        <!-- 状态为已完成的将处理人清空 -->
+        <if test="zt != null and zt != '' and zt == '4' ">
+            ,clr = ''
+        </if>
+        where xxid = #{xxid}
+    </update>
+    
+    <!-- =============================信息反馈处理日志============================================ -->
+    <!-- 保存处理日志 -->
+	<insert id="insertFeedBackLog" parameterType="com.zfsoft.feedback.entity.FeedBackLogEntity">
+		<![CDATA[
+			insert into
+                JXPJ_XXFK_CLRZB t(
+                    t.rzid,
+                    t.xxid,
+                    t.rznr,
+                    t.czr,
+                    t.czsj,
+                    t.sfcs,
+                    t.clhj
+                )
+            values(
+                #{rzid},
+                #{xxid,jdbcType=VARCHAR},
+                #{rznr,jdbcType=VARCHAR},
+                #{czr,jdbcType=VARCHAR},
+               	sysdate,
+                #{sfcs,jdbcType=VARCHAR},
+                #{clhj,jdbcType=VARCHAR}
+            )
+		]]>
+		<selectKey resultType="java.lang.String" order="BEFORE" keyProperty="rzid">
+            <![CDATA[
+            SELECT SYS_GUID() ID FROM DUAL
+            ]]>
+        </selectKey>
+	</insert>
+	
+	<!-- 获取日志 -->
+	<select id="getFeedBackLogEntityByXxid" resultMap="feedBackLogMap">
+		select * from jxpj_xxfk_clrzb where xxid=#{xxid} order by czsj desc
+	</select>
+	
+	<!-- 获取学院名称 -->
+	<select id="getXyMC" parameterType="java.lang.String" resultType="java.lang.String">
+		SELECT bmmc FROM hrm_bzgl_zzjgb WHERE bmdm = #{xy}
+	</select>
+    
+ 	
+ <!-- =====================================================统计分析================================================================== --> 
+ 
+ </mapper>

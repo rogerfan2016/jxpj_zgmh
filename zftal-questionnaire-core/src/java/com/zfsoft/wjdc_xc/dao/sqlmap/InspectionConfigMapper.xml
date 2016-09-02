@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.zfsoft.wjdc_xc.dao.IInspectionConfigDao">
+    <resultMap id="InspectionConfigMap" type="com.zfsoft.wjdc_xc.entites.InspectionConfig">
+    	<result property="key"       column="key" />
+    	<result property="value"       column="val" />
+    	<result property="append"       column="append" />
+    	<result property="type"       column="type" />
+    	<result property="wjid"       column="wjid" />
+    	<result property="person"       column="person" />
+    	<result property="object"       column="object" />
+    	<result property="startTime"       column="start_Time" />
+    	<result property="endTime"       column="end_Time" />
+    	<result property="status"       column="status" />
+    	<result property="remark"       column="remark" />
+    	<result property="ywjb"       column="ywjb" />
+    	<result property="ywbm"       column="ywbm" />
+    </resultMap>
+
+    <!-- =================================================================================== -->
+    <select id="findConfig" resultType="com.zfsoft.wjdc_xc.entites.InspectionConfig">
+        SELECT *
+		  FROM xc_config
+		 WHERE rownum = 1
+		   AND TYPE = #{type}
+		   AND ywjb = #{ywjb}
+		<if test="ywbm != null and ywbm != ''">
+           AND ywbm = #{ywbm}
+        </if>
+    </select>
+    <!-- =================================================================================== -->
+    <insert id="addConfig">
+        insert into XC_CONFIG(key, val, append, type, wjid, start_Time, end_Time, status, remark, ywbm, ywjb )
+        values(
+            #{key,jdbcType=VARCHAR},
+            #{value,jdbcType=VARCHAR},
+            #{append,jdbcType=VARCHAR},
+            #{type,jdbcType=VARCHAR},
+            #{wjid,jdbcType=VARCHAR},
+            #{startTime,jdbcType=VARCHAR},
+            #{endTime,jdbcType=VARCHAR},
+            '1',
+            #{remark,jdbcType=VARCHAR},
+            #{ywbm,jdbcType=VARCHAR},
+            #{ywjb,jdbcType=VARCHAR}
+        )
+    </insert>
+    <update id="updateConfig" >
+        update XC_CONFIG set key= #{key},type = #{type}
+        <if test="value != null and value != ''">
+           ,val = #{value}
+        </if>
+        <if test="append != null and append != ''">
+           ,append = #{append}
+        </if>
+        <if test="wjid != null and wjid != ''">
+           ,wjid = #{wjid}
+        </if>
+        <if test="person != null and person != ''">
+           ,person = #{person}
+        </if>
+        <if test="object != null and object != ''">
+           ,object = #{object}
+        </if>
+        <if test="startTime != null and startTime != ''">
+           ,startTime = #{startTime}
+        </if>
+        <if test="endTime != null and endTime != ''">
+           ,endTime = #{endTime}
+        </if>
+        <if test="status != null and status != ''">
+           ,status = #{status}
+        </if>
+        <if test="ywbm != null and ywbm != ''">
+           ,ywbm = #{ywbm}
+        </if>
+         where key= #{key} and type = #{type} AND ywjb = #{ywjb} AND ywbm = #{ywbm}
+    </update>
+
+    <select id="getPagingInfoList" resultType="hashmap">
+         select * from (select a.*, rownum rn from(
+        select * from ${table} where (${express})
+         <if test="orderStr != null and orderStr != ''">
+            order by ${orderStr}
+        </if> 
+     ) a )
+        <![CDATA[
+            where rn>=#{startRow}  and rn<=#{endRow}
+        ]]>
+    </select>
+    
+    <select id="getPagingInfoCount" resultType="int">
+        select count(0) from ${table} where ${express}
+    </select>
+</mapper>

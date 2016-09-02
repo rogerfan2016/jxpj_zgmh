@@ -1,0 +1,114 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<!DOCTYPE html>
+<html>
+<head>
+<meta chaset="UTF-8">
+<%@ include file="/WEB-INF/pages/mobile/meta.jsp" %>
+</head>
+<body>
+<script type="text/x-handlebars-template" id="amz-tpl">
+{{>header header}}
+</script>
+<div data-am-widget="tabs" class="am-tabs am-tabs-default">
+	<ul class="am-tabs-nav am-cf">
+	    <li class="<c:if test='${query.status eq "0"}'>am-active</c:if>"><a href="javascript:;" status="0">未评价</a></li>
+	    <li class="<c:if test='${query.status eq "1"}'>am-active</c:if>"><a href="javascript:;" status="1">已评价</a></li>
+	</ul>
+	<form id="wjListForm" action="result_list.html?type=${type}" method="post">
+     <input type="hidden" name="query.status" id="djzt" value="${query.status}"/>
+     <c:if test="${empty pageList}">
+     <div id="liNotFind" class="survey_list" style="padding-top:30px;text-align:center;height:80px;display:none;">
+       <span style="color:green">暂无记录</span>
+     </div>
+     </c:if>
+	<div data-am-widget="list_news" class="am-list-news am-list-news-default" >
+        <div class="am-list-news-bd">
+			<ul class="am-list">
+				<c:forEach items="${pageList}" var="p" varStatus="st">
+	                <li class="am-g am-list-item-dated">
+	                    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+	                        <tr>
+	                            <td valign="center" width="70%">
+	                            		评价名称：${p.dcdxText }<br>
+	                                	评价对象：${p.dcdxText }<br>
+	                               	 	评价模板：${p.wjText }<br>
+	                               		评价时间：<s:date name="taskDate" format="yyyy-MM-dd"/><br>
+	                               		评价结果：<font color="red"><c:if test="${p.zf eq null}">0</c:if>${p.zf }</font>分<br>
+	                            </td>
+			                	<td align="center" valign="center">
+			                		<c:if test="${p.status=='0'}">
+			                			<c:if test="${p.rwzt=='1'}">
+			                                <button type="button" onclick="yhdj('${p.id}')" style="border-radius:10px;" class="am-btn am-btn-success am-round">我要评价</button>
+			                            </c:if>
+			                            <c:if test="${p.rwzt!='1'}">
+			                        		<button type="button" style="border-radius:10px;" class="am-btn am-btn-default am-round">未开始</button>
+			                        	</c:if>
+			                        </c:if>
+			                        <c:if test="${p.status=='1'}">
+			                         	<button type="button" onclick="yhdj('${p.id}')" style="border-radius:10px;" class="am-btn am-btn-secondary am-round">查看</button>
+			                    	</c:if>
+			                	</td>
+	                        </tr>
+	                    </table>
+	                </li>
+				</c:forEach>
+			</ul>
+		</div>
+	</div>
+	<table cellSpacing="0" cellPadding="0" width="100%" class="pageTage">
+	  <tr>
+	    <td align="right" style="padding-left: 20px"><div id="previous"><a onclick="wjdc_xc_result_toPager(${pageInfo.page<2?pageInfo.page:pageInfo.page-1});" href="#">上一页</a></div></td>
+	    <td width="30%" align="center">第<span style="color:red;">${pageInfo.page}</span>页/共<span id="totalPage" style="color:red;">${pageInfo.lastPage }</span>页</td>
+	    <td align="left" style="padding-right: 20px"><div id="next"><a onclick="wjdc_xc_result_toPager(${pageInfo.page<pageInfo.lastPage?pageInfo.page+1:pageInfo.page});" href="#">下一页</a></div></td>
+	  </tr>
+	</table>
+	</form>
+</div>
+<script type="text/javascript">
+		
+    var $tpl = $('#amz-tpl');
+    var source = $tpl.text();
+    var template = Handlebars.compile(source);
+    var leftc = [];
+    var obj = {};
+    obj.link = "javascript:history.go(-1);";
+    obj.icon = "chevron-left";
+    leftc.push(obj);
+    
+    data.header.content.title = "我的评价";
+    data.header.content.left = leftc;
+
+    var html = template(data);
+    $tpl.before(html);
+    
+    //用户答卷
+    function yhdj(id){
+   		location.href="<%=request.getContextPath() %>/inspection_mobile/result_detail.html?type=${type}&inspectionTaskResult.id="+id;
+  	}
+
+   	$(function(){
+ 		$(".am-tabs-nav").find("a").each(function(){
+    		if($(this).attr("status")=="${query.status}"){
+      			$(this).parent("li").addClass("nav_active");
+           	}
+       		$(this).click(function(){
+           		$("#djzt").val($(this).attr("status"));
+            	$("#wjListForm").submit();
+     		});
+  		});               
+	});
+
+	function wjdc_xc_result_toPager(page){
+     	if ($("#nowPage").val() == page) {
+        	return false;
+      	}
+       	$("#nowPage").val(page);
+     	$("form:first").submit();
+	}
+</script>
+<%@ include file="/WEB-INF/pages/mobile/navbar.jsp" %>
+</body>
+</html>
